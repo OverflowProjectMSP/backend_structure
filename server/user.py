@@ -145,9 +145,9 @@ def add_user_todb(name, email, pas):
             return return_data
  
 # Изменения пароля, если user знает страый
-def change_password(password, old_password, email):
+def change_password(password, old_password, id):
     try: 
-        if check_old_password(old_password, email): # Вернет True если пароли стовпадает со старым 
+        if check_old_password(old_password, id): # Вернет True если пароли стовпадает со старым 
             pg = psycopg2.connect(f"""
                 host=localhost
                 dbname=postgres
@@ -159,15 +159,15 @@ def change_password(password, old_password, email):
 
             cursor.execute(f'''UPDATE users
                             SET password=$${password}$$
-                            WHERE email=$${email}$$;
+                            WHERE id=$${id}$$;
                             ''')
             pg.commit()
 
             logging.info('Пароль изменен')
 
-            return_data = True
+            return_data = "True"
 
-        else: return_data = False
+        else: return_data = "False"
 
     except (Exception, Error) as error:
         logging.error('DB:', error)
@@ -181,7 +181,7 @@ def change_password(password, old_password, email):
             return return_data
 
 # Проверка совпадениеия старого пароля с ныненшним
-def check_old_password(email, password):
+def check_old_password(id, password):
     try:
         pg = psycopg2.connect(f"""
             host=localhost
@@ -192,12 +192,12 @@ def check_old_password(email, password):
         """)
 
         cursor = pg.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        password_to_check = cursor.execute(f'SELECT password FROM users WHERE email=$${email}$$')
+        password_to_check = cursor.execute(f'SELECT password FROM users WHERE id=$${id}$$')
 
         if password_to_check == password:
-            return_data = True
+            return_data = "True"
             logging.info('Пароли не совпадают')
-        else: return_data = False
+        else: return_data = "False"
 
     except (Exception, Error) as error:
         logging.error(f'DB: ', error)
@@ -217,18 +217,27 @@ def change_password_send(password, email):
                     host=localhost
                     dbname=postgres
                     user=postgres
-                    password{os.getenv('PASSWORD_PG')}*
+                    password={os.getenv('PASSWORD_PG')}
                     port={os.getenv('PORT_PG')}
                 """)
         cursor = pg.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        print(f'''UPDATE users
+                SET password=$${password}$$
+                WHERE email=$${email}$$;
+                ''')
 
         cursor.execute(f'''UPDATE users
                         SET password=$${password}$$
                         WHERE email=$${email}$$;
                         ''')
         pg.commit()
+        return_data = "True"
+        logging.info("Пароль изменен")
+
+
     except (Exception, Error) as error:
-        return_data = f"Ошибка получения данных: {error}" 
+        logging.error(f"Ошибка получения данных: {error}" )
+        return_data = "Error"
 
     finally:
         if pg:
@@ -261,7 +270,9 @@ def send_code(email):
     server.sendmail(sender, email, msg.as_string())
 
     # держим пароль в сессии
-    session['code'] = code_pas
+    session['code'] = str(code_pas)
+    session.modified = True
+    session['email'] = str(email)
     session.modified = True
 
     logging.info('Пароль отправлен на почту')
@@ -270,15 +281,49 @@ def send_code(email):
 
 # Проверка совпадения кода с Frontend и реального кода
 def check_password(password, true_password):
+    print(password, type(password), true_password, type(true_password))
     if password == true_password:
-        return_data = True
+        return_data = 'True'
         logging.info('Пароли совпали')
     else: 
         logging.info('Пароли не совпали')
-        return_data = False
+        return_data = 'False'
     session.pop('sent-password', None)
     return return_data
 
+def show_user_info(id):
+    try: 
+        pg = psycopg2.connect(f"""
+            host=localhost
+            dbname=postgres
+            user=postgres
+            password={os.getenv('PASSWORD_PG')}
+            port={os.getenv('PORT_PG')}
+        """)
+
+        cursor = pg.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        cursor.execute(f"SELECT * from users WHERE id=$${id}$$")
+        
+        all_states = dict(cursor.fetchall()[0])
+        logging.info('Инфа есть')
+        return_data={}
+
+        for key in all_states:
+            if key != "password":
+                return_data[key] = all_states[key]
+
+    except (Exception, Error) as error:
+        logging.error(f'DB: ', error)
+        return_data = f"Ошибка обращения к базе данных: {error}" 
+
+    finally:
+        if pg:
+            cursor.close
+            pg.close
+            logging.info("Соединение с PostgreSQL закрыто")
+            return return_data
+ 
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -339,8 +384,8 @@ def new_password_with_old():
 
     #Вызов, debug и возврат ответа на клиент функции обновления пароля
     if request.method=='PUT':
-        response_object['changeable'] = change_password(post_data.get('new_password'),post_data.get('old_passord') ,post_data.get('email'))
-        logging.info(response_object['changeable'])
+        response_object['res'] = change_password(post_data.get('new_password'),post_data.get('old_passord'), "f527d19a-f56b-4614-bab6-63800ed79825")
+        logging.info(response_object['res'])
     
     return jsonify(response_object)
 
@@ -352,7 +397,8 @@ def new_password_with_email():
 
     if request.method=='PUT':
         #Восстановление пароля если мы в аккаунте
-        change_password_send(post_data('new_password'), session.get('email'))
+        print(post_data.get('password'), session.get('email'))
+        response_object['res'] = change_password_send(post_data.get('password'), session.get('email'))
     
     elif request.method == 'POST' and post_data.get('email'):
         #Восстановление пароля если мы НЕ в аккаунте
@@ -360,7 +406,7 @@ def new_password_with_email():
     
     else:
         # ХЗ, вроде проверка кода подтверждения
-        response_object['stat'] = check_password(post_data.get('password'), session.get('code'))
+        response_object['res'] = check_password(post_data.get('emailCode'), session.get('code'))
     
     return jsonify(response_object)
  

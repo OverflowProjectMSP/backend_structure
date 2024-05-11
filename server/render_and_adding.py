@@ -524,17 +524,20 @@ def add_ans(text, isQ, idO, id_u):
             port={os.getenv('PORT_PG')}
         """)
 
+        print(f"INSERT INTO {obj} VALUES{to_write}")
+
         cursor = pg.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cursor.execute(f"INSERT INTO {obj} VALUES{to_write}")      
+        print(1)
         pg.commit()  
 
-        logging.info("200\n", to_write)
+        logging.info(to_write)
 
         return_data = "Комментарий добавлен!"
 
     except (Exception, Error) as error:
-        logging.error(error)
-        return_data = f"Ошибка добавления в базу данных: {error}" 
+        logging.error(f"Ошибка добавления в базу данных: {error}")
+        return_data = "Error"
 
     finally:
         if pg:
@@ -688,20 +691,6 @@ def one_something():
 
     return jsonify(responce_object)
 
-# может ли юзер удалять/менять или нет
-@app.route('/check-user',methods=['POST'])
-def check_user():
-    responce_object = {'status' : 'success'} #БаZа
-
-    post_data = request.get_json()
-
-    if  post_data.get('id')==session.get('id'):
-        responce_object['user'] = True
-    else: 
-        responce_object['user']=False
-
-    return jsonify(responce_object)
- 
 # Удаление чего-то
 @app.route('/delete',methods=['DELETE'])
 def delete_():
@@ -755,16 +744,19 @@ def show_all_by_user_route():
     logging.info('Отправлено')
     return jsonify(response_object)
  
-@app.route('/answers', methods=['POST'])
+@app.route('/answers', methods=['POST', 'GET'])
 def add_a():
-    response_object = {'status': 'success'} #БаZа
+    if request.method == "POST":
 
-    post_data = request.get_json()
-    text = post_data.get('text')
+        response_object = {'status': 'success'} #БаZа
 
-    if post_data.get('q'):
-        response_object['res'] =  add_ans(text, True, post_data.get('id'), session.get('id'))
+        post_data = request.get_json()
+        text = post_data.get('text')
+
+        if post_data.get('q'):
+            response_object['all'] =  add_ans(text, True, post_data.get('id'), 'f527d19a-f56b-4614-bab6-63800ed79825')
+            return jsonify(response_object)
+        response_object['all'] =  add_ans(text, False, post_data.get('id'), 'f527d19a-f56b-4614-bab6-63800ed79825')
         return jsonify(response_object)
-    response_object['res'] =  add_ans(text, False, post_data.get('id'), session.get('id'))
-    return jsonify(response_object)
- 
+
+    # response_object['res'] = 
