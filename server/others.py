@@ -73,7 +73,33 @@ def show_avatar(id):
             logging.info("Соединение с PostgreSQL закрыто")
             return return_data
 
+def helper(phone, email, msg, id_u):
+    try:
+        pg = psycopg2.connect(f"""
+            host=localhost
+            dbname=postgres
+            user=postgres
+            password={os.getenv('PASSWORD_PG')}
+            port={os.getenv('PORT_PG')}
+        """)
 
+        cursor = pg.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        cursor.execute(f'''INSERT INTO helper VALUES({uuid.uuid4().hex}, {msg}, {phone}, {email}, {id_u})''')
+        
+        pg.commit()
+
+        return 'Ваня'
+    except (Exception, Error) as error:
+        logging.info(f"Ошибка получения данных: {error}")
+        return_data = 'Errro'
+
+    finally:
+        if pg:
+            cursor.close
+            pg.close
+            logging.info("Соединение с PostgreSQL закрыто")
+            return return_data
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -136,4 +162,18 @@ def serve_file(filename):
         return jsonify({'error': 'File not found'}), 404
 
     return send_from_directory(directory='/avatar/', path=path)
+
+@app.route('/session', methods=['GET'])
+def session_():
+    
+    return jsonify({'status': 'success', 'id': session.get('id')})
  
+@app.route('/help', methods=['POST'])
+def help_():
+    responce_object = {'status' : 'success'} #БаZа
+
+    post_data = request.get_json()
+
+    responce_object['all'] = helper(post_data.get('phone'), post_data.get('email'), post_data.get('message'), session.get('id'))
+
+    return  jsonify(responce_object)

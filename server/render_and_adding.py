@@ -677,16 +677,18 @@ def show_f():
     return jsonify(responce_object)
 
 # Одино что-то
-@app.route('/question', methods=['GET'])
+@app.route('/show-one', methods=['GET'])
 def one_something():
     responce_object = {'status': 'success'}
 
-    post_data = request.get_json()
+    # post_data = request.get_json()
+    id = request.args.get('id')
+    is_Q = request.args.get('q')
 
-    if post_data.get('question'):
-        responce_object['all'] = show_one(post_data.get('id'), True)
+    if is_Q:
+        responce_object['all'] = show_one(id, True)
     else:
-        responce_object['all'] = show_one(post_data.get('id'), True)
+        responce_object['all'] = show_one(id, False)
 
 
     return jsonify(responce_object)
@@ -754,9 +756,9 @@ def add_a():
         text = post_data.get('text')
 
         if post_data.get('q'):
-            response_object['all'] =  add_ans(text, True, post_data.get('id'), 'f527d19a-f56b-4614-bab6-63800ed79825')
+            response_object['all'] =  add_ans(text, True, post_data.get('id'), session.get('id'))
             return jsonify(response_object)
-        response_object['all'] =  add_ans(text, False, post_data.get('id'), 'f527d19a-f56b-4614-bab6-63800ed79825')
+        response_object['all'] =  add_ans(text, False, post_data.get('id'), session.get('id'))
         return jsonify(response_object)
 
     # response_object['res'] = 
