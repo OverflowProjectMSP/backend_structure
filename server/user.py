@@ -313,6 +313,22 @@ def show_user_info(id):
             if key != "password":
                 return_data[key] = all_states[key]
 
+        # счетчик статей
+        cursor.execute(f"SELECT COUNT(*) from states WHERE id_u=$${id}$$")
+        return_data['scnt'] = cursor.fetchone()[0]
+
+        # счетчик вопросов
+        cursor.execute(f"SELECT * from questions WHERE id_u=$${id}$$")
+        return_data['qcnt'] = cursor.fetchone()[0]
+
+        # счетчик ответов и комментариев
+        cursor.execute(f"SELECT * from answers WHERE id_u=$${id}$$")
+        cnt_a = cursor.fetchone()[0]
+        cursor.execute(f"SELECT * from comments WHERE id_u=$${id}$$")
+        cnt_c = cursor.fetchone()[0]
+        return_data['acnt'] =cnt_a + cnt_c
+
+
     except (Exception, Error) as error:
         logging.error(f'DB: ', error)
         return_data = f"Ошибка обращения к базе данных: {error}" 
