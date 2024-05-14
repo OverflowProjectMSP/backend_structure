@@ -700,7 +700,7 @@ def delete_():
 
     post_data = request.args.get('id')
 
-    if  request.args.get('question') == 'true':
+    if  request.args.get('q') == 'true':
         responce_object['all'] = delete(post_data, True) 
     else:
         responce_object['all'] = delete(post_data, False) 

@@ -116,19 +116,19 @@ def chat_forum():
     
     return jsonify(responce_object)
 
-# может ли юзер удалять/менять или нет
-@app.route('/check-user',methods=['POST'])
-def check_user():
-    responce_object = {'status' : 'success'} #БаZа
+# # может ли юзер удалять/менять или нет
+# @app.route('/check-user',methods=['GET'])
+# def check_user():
+#     responce_object = {'status' : 'success'} #БаZа
 
-    post_data = request.get_json()
+#     post_data = request.get_json()
 
-    if  post_data.get('id')==session.get('id'):
-        responce_object['user'] = "True"
-    else: 
-        responce_object['user'] = "False"
+#     if  post_data.get('id')==session.get('id'):
+#         responce_object['user'] = "True"
+#     else: 
+#         responce_object['user'] = "False"
 
-    return jsonify(responce_object)
+#     return jsonify(responce_object)
   
 # проверка может ли юзер исправлять что-то
 @app.route('/check', methods=['GET'])
@@ -139,10 +139,10 @@ def check():
     logging.info(id)
 
     if id == session.get('id'):
-        response_object['isEdit'] = 'True'
+        response_object['isEdit'] = 'true'
 
     else:
-        response_object['isEdit'] = 'False'
+        response_object['isEdit'] = 'false'
 
     return  jsonify(response_object)
  
