@@ -100,6 +100,33 @@ def helper(phone, email, msg, id_u):
             pg.close
             logging.info("Соединение с PostgreSQL закрыто")
             return return_data
+def show_name(id):
+    try:
+        pg = psycopg2.connect(f"""
+            host=localhost
+            dbname=postgres
+            user=postgres
+            password={os.getenv('PASSWORD_PG')}
+            port={os.getenv('PORT_PG')}
+        """)
+
+        cursor = pg.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        cursor.execute(f'''SELECT username FROM users
+                      WHERE id = $${id}$$''')
+        
+        link = cursor.fetchall()[0]
+        return_data = link
+    except (Exception, Error) as error:
+        logging.info(f"Ошибка получения данных: {error}")
+        return_data = 'No'
+
+    finally:
+        if pg:
+            cursor.close
+            pg.close
+            logging.info("Соединение с PostgreSQL закрыто")
+            return return_data
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -177,3 +204,19 @@ def help_():
     responce_object['all'] = helper(post_data.get('phone'), post_data.get('email'), post_data.get('message'), session.get('id'))
 
     return  jsonify(responce_object)
+
+@app.route('/avatarka', methods=['GET'])
+def ava_():
+    response_object = {'status': 'success'} #БаZа
+
+    response_object['link'] = show_avatar(session.get('id'))
+
+    return jsonify(response_object)
+
+@app.route('/user', methods=['GET'])
+def ava_():
+    response_object = {'status': 'success'} #БаZа
+
+    response_object['name'] = show_name(id = request.args.get('id'))
+
+    return jsonify(response_object)
