@@ -214,7 +214,7 @@ def ava_():
     return jsonify(response_object)
 
 @app.route('/user', methods=['GET'])
-def ava_():
+def user_():
     response_object = {'status': 'success'} #БаZа
 
     response_object['name'] = show_name(id = request.args.get('id'))
