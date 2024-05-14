@@ -357,16 +357,21 @@ def show_one(id, isQ):
 
             cursor = pg.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-            cursor.execute(f"SELECT * from states WHERE id = $${id}$$")
-            
+            cursor.execute(f"SELECT * from questions WHERE id = $${id}$$")
+            print(f"SELECT * from questions WHERE id = $${id}$$")
             all_states = cursor.fetchall()[0]
             
             all_asw = show_answers(True, id)
 
+            all_s = dict(all_states)
+            all_a = []
+
+            for i in all_asw:
+                all_a.append(dict(i))
 
             return_data = {
-                'question:': all_states,
-                'answers': all_asw     
+                'question': all_s,
+                'answers': all_a     
                            }
 
         except (Exception, Error) as error:
@@ -561,7 +566,7 @@ def show_answers(isQ, idO):
             
             cursor.execute(f'''SELECT * FROM answers 
                        WHERE id_q = $${idO}$$
-                       ORDER BY date''')
+                       ORDER BY answers.data''')
             
             return_data = cursor.fetchall()
 
@@ -690,7 +695,7 @@ def one_something():
     else:
         responce_object['all'] = show_one(id, False)
 
-
+    print(responce_object)
     return jsonify(responce_object)
 
 # Удаление чего-то

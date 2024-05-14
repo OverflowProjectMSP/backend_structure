@@ -80,7 +80,7 @@ def login_user(email, pas):
                 return_data = user[2]
 
                 logging.info(f"Вход выполнен! Здравствуйте, {user[2]}")
-                return_data=['ok', user[0]]
+                return_data="True"
 
             else: 
                 logging.warning("Неверный пароль!")

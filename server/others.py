@@ -217,6 +217,6 @@ def ava_():
 def user_():
     response_object = {'status': 'success'} #БаZа
 
-    response_object['name'] = show_name(id = request.args.get('id'))
+    response_object['name'] = show_name(request.args.get('id'))
 
     return jsonify(response_object)
